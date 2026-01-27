@@ -1,0 +1,3 @@
+GET http://localhost:5501/inventory/insights
+Content-Type: application/json
+Authorization: Bearer {eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2ODhkNWQ2ZGI3ZWFlYzM5YWMxZmVlZTUiLCJpYXQiOjE3Njk0OTE4MTQsImV4cCI6MTc2OTU3ODIxNH0.lroQkZ_k-qEsEYGi-P8ZivrXIsREtOILg08Vmq9OEiM}
