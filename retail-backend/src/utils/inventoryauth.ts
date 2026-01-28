@@ -1,13 +1,19 @@
 import path from "path";
 import { google } from "googleapis";
 import { JWT } from "google-auth-library";
-
+import fs from "fs"
 export const getGoogleSheetClient = async () => {
   try {
-    const auth = new google.auth.GoogleAuth({
-      keyFile: path.join(__dirname, "../config/creds.json"),
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
+
+    const keyFilePath = process.env.RENDER_SECRETS_PATH
+  ? path.join(process.env.RENDER_SECRETS_PATH, "creds.json")
+  : path.join(__dirname, "../config/creds.json"); // fallback for local dev
+
+const auth = new google.auth.GoogleAuth({
+  keyFile: keyFilePath,
+  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+});
+  
 
     const authClient = await auth.getClient() as JWT;
 

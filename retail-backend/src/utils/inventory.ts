@@ -6,7 +6,7 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { io } from "../server"; 
 import { Inventory } from "../models/Inventory";
-
+import fs from "fs";
 //  Fetch sheet metadata (tab names)
 export const getGoogleSheetMeta = async (sheetUrl: string): Promise<string[]> => {
   const sheetIdMatch = sheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
@@ -14,10 +14,14 @@ export const getGoogleSheetMeta = async (sheetUrl: string): Promise<string[]> =>
 
   const sheetId = sheetIdMatch[1];
 
-  const auth = new google.auth.GoogleAuth({
-    keyFile: path.join(__dirname, "../config/creds.json"),
-    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-  });
+  const keyFilePath = process.env.RENDER_SECRETS_PATH
+  ? path.join(process.env.RENDER_SECRETS_PATH, "creds.json")
+  : path.join(__dirname, "../config/creds.json"); // fallback for local dev
+
+const auth = new google.auth.GoogleAuth({
+  keyFile: keyFilePath,
+  scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+});
 
   const client = (await auth.getClient()) as JWT;
   const sheets = google.sheets({ version: "v4", auth: client });
@@ -69,10 +73,16 @@ export const sendUpdates = async (userId: string): Promise<void> => {
 
     //  Setup Google Sheets API
     console.log("Authenticating Google Sheets...");
-    const auth = new google.auth.GoogleAuth({
-      keyFile: path.join(__dirname, "../config/creds.json"),
-      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-    });
+
+    const keyFilePath = process.env.RENDER_SECRETS_PATH
+  ? path.join(process.env.RENDER_SECRETS_PATH, "creds.json")
+  : path.join(__dirname, "../config/creds.json"); // fallback for local dev
+
+const auth = new google.auth.GoogleAuth({
+  keyFile: keyFilePath,
+  scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+});
+
     const sheets = google.sheets({ version: "v4", auth: (await auth.getClient()) as JWT });
 
     // Helper to fetch and parse a sheet

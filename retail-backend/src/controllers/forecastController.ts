@@ -55,10 +55,15 @@ export const generateForecastReport = async (req: AuthRequest, res: Response) =>
       if (!sheetIdMatch) throw new Error("Invalid Google Sheet URL");
       const sheetId = sheetIdMatch[1];
 
-      const auth = new google.auth.GoogleAuth({
-        keyFile: path.join(__dirname, "../config/creds.json"),
-        scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-      });
+      const keyFilePath = process.env.RENDER_SECRETS_PATH
+  ? path.join(process.env.RENDER_SECRETS_PATH, "creds.json")
+  : path.join(__dirname, "../config/creds.json"); // fallback for local dev
+
+const auth = new google.auth.GoogleAuth({
+  keyFile: keyFilePath,
+  scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+});
+
       const sheets = google.sheets({ version: "v4", auth: (await auth.getClient()) as JWT });
 
       const response = await sheets.spreadsheets.values.get({

@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from "uuid";
 import { createStockNotification } from "../utils/lowstocknotification";
 import Notification from "../models/Notification";
 import minMax from "dayjs/plugin/minMax";
+import fs from "fs";
 dayjs.extend(isoWeek);
 dayjs.extend(minMax);
 const insightsCache: Map<string, { data: any; timestamp: number }> = new Map();
@@ -22,10 +23,16 @@ const CACHE_DURATION = 60 * 1000; // 1 min
 //  SUBSCRIBE TO GOOGLE SHEET CHANGES
 const watchGoogleSheet = async (userId: string, sheetId: string) => {
   try {
-    const auth = new google.auth.GoogleAuth({
-      keyFile: path.join(__dirname, "../config/creds.json"),
-      scopes: ["https://www.googleapis.com/auth/drive"],
-    });
+
+    const keyFilePath = process.env.RENDER_SECRETS_PATH
+  ? path.join(process.env.RENDER_SECRETS_PATH, "creds.json")
+  : path.join(__dirname, "../config/creds.json"); // fallback for local dev
+
+const auth = new google.auth.GoogleAuth({
+  keyFile: keyFilePath,
+  scopes: ["https://www.googleapis.com/auth/drive"],
+});
+   
     const drive = google.drive({ version: "v3", auth });
 
     // Ensure BASE_URL is HTTPS
@@ -159,10 +166,15 @@ export const handleSheetWebhook = async (req: Request, res: Response) => {
     }
 
     // Authenticate Google Sheets API
-    const auth = new google.auth.GoogleAuth({
-      keyFile: path.join(__dirname, "../config/creds.json"),
-      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-    });
+    const keyFilePath = process.env.RENDER_SECRETS_PATH
+  ? path.join(process.env.RENDER_SECRETS_PATH, "creds.json")
+  : path.join(__dirname, "../config/creds.json"); // fallback for local dev
+
+const auth = new google.auth.GoogleAuth({
+  keyFile: keyFilePath,
+  scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+});
+
     const sheets = google.sheets({ version: "v4", auth: (await auth.getClient()) as JWT });
 
     //  Helper: Fetch Google Sheet tab data
@@ -269,10 +281,15 @@ export const getInventoryInsights = async (req: AuthRequest, res: Response) => {
     if (!sheetIdMatch) throw new Error("Invalid Google Sheet URL");
     const sheetId = sheetIdMatch[1];
 
-    const auth = new google.auth.GoogleAuth({
-      keyFile: path.join(__dirname, "../config/creds.json"),
-      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-    });
+    const keyFilePath = process.env.RENDER_SECRETS_PATH
+  ? path.join(process.env.RENDER_SECRETS_PATH, "creds.json")
+  : path.join(__dirname, "../config/creds.json"); // fallback for local dev
+
+const auth = new google.auth.GoogleAuth({
+  keyFile: keyFilePath,
+  scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+});
+ 
     const sheets = google.sheets({ version: "v4", auth: await auth.getClient() as JWT });
 
     // Helper to fetch sheet data
@@ -525,10 +542,15 @@ export const updateProductStock = async (req: AuthRequest, res: Response) => {
     const sheetId = sheetIdMatch[1];
 
     //  Setup Google Sheets API
-    const auth = new google.auth.GoogleAuth({
-      keyFile: path.join(__dirname, "../config/creds.json"),
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
+    const keyFilePath = process.env.RENDER_SECRETS_PATH
+  ? path.join(process.env.RENDER_SECRETS_PATH, "creds.json")
+  : path.join(__dirname, "../config/creds.json"); // fallback for local dev
+
+const auth = new google.auth.GoogleAuth({
+  keyFile: keyFilePath,
+  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+});
+
     const sheets = google.sheets({ version: "v4", auth: (await auth.getClient()) as JWT });
 
     //  Fetch the "products" tab data
