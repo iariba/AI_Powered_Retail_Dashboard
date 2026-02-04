@@ -26,7 +26,7 @@ const watchGoogleSheet = async (userId: string, sheetId: string) => {
 
     const keyFilePath = process.env.RENDER_SECRETS_PATH
   ? path.join(process.env.RENDER_SECRETS_PATH, "creds.json")
-  : path.join(__dirname, "../config/creds.json"); // fallback for local dev
+  : path.join(process.cwd(), "config/creds.json");
 
 const auth = new google.auth.GoogleAuth({
   keyFile: keyFilePath,
