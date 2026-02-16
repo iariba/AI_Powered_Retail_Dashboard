@@ -1,4 +1,4 @@
-import api from "./axios"; // ✅ axios middleware instance
+import api from "./axios"; 
 
 
 // Fetch connected inventory

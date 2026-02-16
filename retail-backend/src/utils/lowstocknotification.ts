@@ -23,16 +23,17 @@ export const createStockNotification = async ({
       severity = "medium";
       message = `Low stock alert: "${productName}" has only ${stock} left in stock.`;
     } else {
-      // No notification needed
+
       return;
     }
 
-    // Avoid duplicate notifications with same product and same stock level
+
     const existing = await Notification.findOne({
       userId,
       type,
       productName,
       stock,
+      message
     });
 
     if (existing) return;

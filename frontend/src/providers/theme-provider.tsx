@@ -42,12 +42,10 @@ export function ThemeProvider({
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   );
 
-  // ✅ Apply immediately on first render
   useEffect(() => {
     applyThemeClass(theme);
   }, [theme]);
 
-  // ✅ Also apply once before mount (first paint) — fix for hydration/flash
   if (typeof window !== "undefined") {
     applyThemeClass(theme);
   }

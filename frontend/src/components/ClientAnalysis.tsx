@@ -29,7 +29,7 @@ export function ClientAnalysis({ genderDistribution }: ClientAnalysisProps) {
           {[...Array(10)].map((_, i) => (
             <User
               key={i}
-              className={`w-5 h-5 sm:w-6 sm:h-6 ${
+              className={`w-5 h-5 sm:w-6 sm:h-6 2xl:w-7 2xl:h-7 ${
                 i < maleClients
                   ? 'text-blue-500'
                   : i < maleClients + femaleClients
@@ -40,19 +40,21 @@ export function ClientAnalysis({ genderDistribution }: ClientAnalysisProps) {
           ))}
         </div>
 
-        {/* Text block - responsive and centered on small screens */}
-        <div className="rounded-lg p-4 text-black dark:text-white w-full mx-auto md:mx-0 flex flex-col items-center">
+        <div className="rounded-lg p-4 2xl:p-6 text-black dark:text-white w-full mx-auto md:mx-0 flex flex-col items-center justify-center 2xl:h-[260px]">
+
 
           <div className="flex items-center justify-center gap-2 mb-2">
-            <UserIcon className="h-5 w-5" />
-            <span>On average,</span>
+            <UserIcon className="w-5 h-5 2xl:w-7 2xl:h-7" />
+            <span className="2xl:text-lg">On average,</span>
+
           </div>
-          <p className="text-xl font-bold mb-1 ">{maleClients} out of 10</p>
-          <p>clients are Male</p>
-          <p className="text-xl font-bold mb-1 ">{femaleClients} out of 10</p>
-          <p className='lg:ml-2'>clients are Female</p>
+          <p className="text-xl font-bold mb-1 2xl:text-2xl">{maleClients} out of 10</p>
+         <p className="2xl:text-lg">clients are Male</p>
+
+          <p className="text-xl font-bold mb-1 2xl:text-2xl">{femaleClients} out of 10</p>
+          <p className="2xl:text-lg">clients are Female</p>
           {otherClients > 0 && (
-            <p className="text-xl font-bold mb-1">
+            <p className="text-xl font-bold mb-1 2xl:text-2xl">
               {otherClients} out of 10 clients are Others
             </p>
           )}

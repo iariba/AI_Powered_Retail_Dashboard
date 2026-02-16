@@ -7,9 +7,8 @@ import { authenticateUser } from "../api/auth";
 
 const AuthPage = ({ isLogin }: { isLogin: boolean }) => {
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();// Used for navigation
+  const navigate = useNavigate();
 
-  // Validation Schema
   const validationSchema = Yup.object({
     name: !isLogin ? Yup.string().required("Name is required") : Yup.string().notRequired(),
     email: Yup.string().email("Invalid email format").required("Email is required"),
@@ -22,8 +21,7 @@ const AuthPage = ({ isLogin }: { isLogin: boolean }) => {
           .required("Confirm Password is required")
       : Yup.string().notRequired(),
   });
-
-  // Formik setup
+//formik setup
   const formik = useFormik({
     initialValues: { name: "", email: "", password: "", confirmPassword: "" },
     validationSchema,

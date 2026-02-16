@@ -1,5 +1,6 @@
 import express from "express";
-import { connectInventorySheet, disconnectInventorySheet, getInventoryInsights, handleSheetWebhook, updateProductStock, getConnectedInventorySheet } from "../controllers/inventoryController";
+import { connectInventorySheet, disconnectInventorySheet, getInventoryInsights, handleSheetWebhook, 
+    updateProductStock, getConnectedInventorySheet} from "../controllers/inventoryController";
 import { authenticateToken } from "../middleware/authMiddleware";
 import { sendUpdates } from "../utils/inventory";
 const router = express.Router();

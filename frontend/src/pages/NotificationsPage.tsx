@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { Sidebar } from "../layout/Sidebar";
 import { Card } from "@/components/ui/card";
 import { Bell } from "lucide-react";
-import { getNotifications } from "../api/notifications"; // <- import your API function
-
+import { getNotifications } from "../api/notifications"; 
 type Notification = {
   _id: string;
   message: string;

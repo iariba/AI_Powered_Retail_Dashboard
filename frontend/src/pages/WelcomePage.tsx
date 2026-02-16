@@ -1,18 +1,18 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BarChart, Network, Boxes } from "lucide-react"; // Updated icons
+import { BarChart, Network, Boxes } from "lucide-react"; 
 
 const WelcomePage = () => {
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-[#001F3F] text-white px-4 sm:px-6">
-      {/* Background Image with Overlay */}
+  
       <div
         className="absolute inset-0 bg-cover bg-center opacity-30"
         style={{ backgroundImage: "url('/bgg.webp')" }}
       ></div>
       <div className="absolute inset-0 bg-[#001F3F] opacity-80"></div>
 
-      {/* Content Container */}
+  
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -24,14 +24,13 @@ const WelcomePage = () => {
         AI-powered demand segmentation, customer insights, and product combination optimization for smarter retail decisions
         </p>
 
-        {/* Feature Options */}
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 bg-white bg-opacity-10 rounded-lg p-4 sm:p-6">
           <FeatureCard icon={Boxes} title="Manage Inventory" />
           <FeatureCard icon={Network} title="Demand Analysis" />
           <FeatureCard icon={BarChart} title="Market Basket Insights" />
         </div>
 
-        {/* Get Started Button */}
         <Link
           to="/login"
           className="inline-block bg-white text-[#001F3F] px-5 py-3 rounded-full text-base sm:text-lg font-semibold shadow-lg mt-6 sm:mt-8 hover:bg-gray-400 transition duration-300"
@@ -43,7 +42,6 @@ const WelcomePage = () => {
   );
 };
 
-// Feature Card Component (Mobile-Responsive)
 const FeatureCard = ({ icon: Icon, title }: { icon: any; title: string }) => (
   <motion.div
     whileHover={{ scale: 1.05 }}

@@ -6,9 +6,9 @@ import User from "../models/User";
 import { google } from "googleapis";
 import { JWT } from "google-auth-library";
 import path from "path";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
-import { io } from "../server"; // Socket.IO instance
+import { io } from "../server"; 
 import cron from "node-cron";
 import { v4 as uuidv4 } from "uuid";
 import { createStockNotification } from "../utils/lowstocknotification";
@@ -20,7 +20,46 @@ dayjs.extend(minMax);
 const insightsCache: Map<string, { data: any; timestamp: number }> = new Map();
 const CACHE_DURATION = 60 * 1000; // 1 min
 
-//  SUBSCRIBE TO GOOGLE SHEET CHANGES
+function buildTopStockProducts(products: any[], sales: any[]) {
+
+  const latestSaleDate = dayjs.max(
+    sales
+      .map(s => dayjs(s.sale_date))
+      .filter(d => d.isValid())
+  );
+
+  if (!latestSaleDate) return [];
+
+  const oneMonthAgo = latestSaleDate.subtract(1, "month");
+
+  const salesByProduct: Record<string, number> = {};
+
+  sales
+    .filter(s => {
+      const d = dayjs(s.sale_date);
+      return d.isValid() && d.isAfter(oneMonthAgo) && d.isBefore(latestSaleDate.add(1,"day"));
+    })
+    .forEach(s => {
+      salesByProduct[s.product_id] =
+        (salesByProduct[s.product_id] || 0) + Number(s.total_price || 0);
+    });
+
+  return Object.entries(salesByProduct)
+    .sort((a, b) => {
+      if (b[1] === a[1]) return a[0].localeCompare(b[0]); 
+      return b[1] - a[1];
+    })
+    .slice(0, 5)
+    .map(([pid]) => {
+      const product = products.find(p => p.product_id === pid);
+      return {
+        product_id: pid,
+        product_name: product?.product_name || "Unknown",
+        stock_quantity: product?.stock_quantity || "0",
+      };
+    });
+}
+
 const watchGoogleSheet = async (userId: string, sheetId: string) => {
   try {
 
@@ -35,7 +74,6 @@ const auth = new google.auth.GoogleAuth({
    
     const drive = google.drive({ version: "v3", auth });
 
-    // Ensure BASE_URL is HTTPS
     if (!process.env.BASE_URL || !process.env.BASE_URL.startsWith("https://")) {
       throw new Error("BASE_URL must be a valid HTTPS URL for Google webhook callback.");
     }
@@ -43,7 +81,6 @@ const auth = new google.auth.GoogleAuth({
     const channelId = uuidv4();
     const webhookUrl = `${process.env.BASE_URL}/sheet-change-webhook`;
 
-    //  Create Watch Subscription
     const watchRes = await drive.files.watch({
       fileId: sheetId,
       requestBody: {
@@ -53,7 +90,6 @@ const auth = new google.auth.GoogleAuth({
       },
     });
 
-    // Save channel info in DB
     await Inventory.findOneAndUpdate(
       { userId },
       {
@@ -73,7 +109,6 @@ const auth = new google.auth.GoogleAuth({
   }
 };
 
-// AUTO-RENEW WEBHOOK EVERY HOUR
 cron.schedule("0 * * * *", async () => {
   try {
     const inventories = await Inventory.find({ "watchChannel.expiration": { $exists: true } });
@@ -93,8 +128,6 @@ cron.schedule("0 * * * *", async () => {
   }
 });
 
-
-//  CONNECT INVENTORY SHEET 
 export const connectInventorySheet = async (req: AuthRequest, res: Response) => {
   try {
     const { sheetUrl } = req.body;
@@ -113,7 +146,7 @@ export const connectInventorySheet = async (req: AuthRequest, res: Response) => 
     await Inventory.create({ userId: req.user.id, sheetUrl, sheetId });
     await User.findByIdAndUpdate(req.user.id, { googleSheetUrl: sheetUrl });
 
-    await watchGoogleSheet(req.user.id, sheetId); // Subscribe immediately
+    await watchGoogleSheet(req.user.id, sheetId); 
 
     res.status(200).json({ message: "Google Sheet connected & webhook subscribed.", sheetsAvailable: sheetMeta });
   } catch (error: any) {
@@ -137,11 +170,10 @@ export const getConnectedInventorySheet = async (req: AuthRequest, res: Response
   }
 };
 
-// WEBHOOK LISTENER: Real-time stock insights push
+// WEBHOOK LISTENER
 export const handleSheetWebhook = async (req: Request, res: Response) => {
   try {
-    //  Verify required headers
-    console.log("Webhook triggered! Headers:", req.headers); //  LOG HEADERS
+    console.log("Webhook triggered! Headers:", req.headers); 
     console.log(" Webhook body:", req.body);
     const resourceId = req.headers["x-goog-resource-id"] as string;
     const channelId = req.headers["x-goog-channel-id"] as string;
@@ -152,23 +184,20 @@ export const handleSheetWebhook = async (req: Request, res: Response) => {
       return res.status(400).send("Invalid webhook request.");
     }
 
-    //  Ignore "sync" notifications (Google sends initial sync pings)
     if (state === "sync") {
       console.log("Webhook sync event received. No action required.");
       return res.status(200).send("OK");
     }
 
-    //  Find the inventory by matching the channel ID
     const inventory = await Inventory.findOne({ "watchChannel.channelId": channelId });
     if (!inventory) {
       console.warn(`No inventory found for channelId: ${channelId}`);
       return res.status(404).send("No matching inventory webhook.");
     }
 
-    // Authenticate Google Sheets API
     const keyFilePath = process.env.RENDER_SECRETS_PATH
   ? path.join(process.env.RENDER_SECRETS_PATH, "creds.json")
-  : path.join(__dirname, "../config/creds.json"); // fallback for local dev
+  : path.join(__dirname, "../config/creds.json"); 
 
 const auth = new google.auth.GoogleAuth({
   keyFile: keyFilePath,
@@ -177,7 +206,6 @@ const auth = new google.auth.GoogleAuth({
 
     const sheets = google.sheets({ version: "v4", auth: (await auth.getClient()) as JWT });
 
-    //  Helper: Fetch Google Sheet tab data
     const fetchSheet = async (sheetName: string) => {
       const resp = await sheets.spreadsheets.values.get({
         spreadsheetId: inventory.sheetId,
@@ -189,7 +217,6 @@ const auth = new google.auth.GoogleAuth({
       return rows.slice(1).map((r) => Object.fromEntries(headers.map((h, i) => [h, r[i] || ""])));
     };
 
-    //  Fetch necessary sheets
     const products = await fetchSheet("products");
     const sales = await fetchSheet("sales");
 
@@ -198,7 +225,6 @@ const auth = new google.auth.GoogleAuth({
       return res.status(400).send("Sheet data incomplete.");
     }
 
-    //  Compute stock summary
     const totalProducts = products.length;
     const outOfStock = products.filter((p) => Number(p.stock_quantity) === 0).length;
     const lowStock = products.filter((p) => {
@@ -206,22 +232,14 @@ const auth = new google.auth.GoogleAuth({
       return qty > 0 && qty <= 10;
     }).length;
 
-    // Compute top stock products (based on recent sales)
     const recentSales = sales.filter((s) => dayjs(s.sale_date).isAfter(dayjs().subtract(1, "month")));
     const salesByProduct: Record<string, number> = {};
     recentSales.forEach((s) => {
       salesByProduct[s.product_id] = (salesByProduct[s.product_id] || 0) + Number(s.total_price || 0);
     });
 
-    const topStockProducts = Object.entries(salesByProduct)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([pid]) => ({
-        product_name: products.find((p) => p.product_id === pid)?.product_name || "Unknown",
-        stock_quantity: products.find((p) => p.product_id === pid)?.stock_quantity || "0",
-      }));
+ const topStockProducts = buildTopStockProducts(products, sales);
 
-    //  Emit real-time updates via Socket.IO
     io.emit(`inventory-updated-${inventory.userId}`, {
       stockSummary: { totalProducts, outOfStock, lowStock },
       topStockProducts,
@@ -240,10 +258,9 @@ export const disconnectInventorySheet = async (req: AuthRequest, res: Response) 
       return res.status(401).json({ error: "Unauthorized access." });
     }
 
-    //  Delete the inventory document for this user
     const result = await Inventory.deleteOne({ userId: req.user.id });
 
-    //  Also clear googleSheetUrl from User model (if stored there)
+
     await User.findByIdAndUpdate(req.user.id, { $unset: { googleSheetUrl: "" } });
 
     if (result.deletedCount === 0) {
@@ -259,24 +276,22 @@ export const disconnectInventorySheet = async (req: AuthRequest, res: Response) 
 
 export const getInventoryInsights = async (req: AuthRequest, res: Response) => {
   try {
-    // Verify authentication
+
     if (!req.user?.id) {
       return res.status(401).json({ error: "Unauthorized access. Please log in." });
     }
 
     const cacheKey = `insights_${req.user.id}`;
     const cached = insightsCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) {
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
       return res.json({ report: cached.data });
     }
 
-    //  Get user's inventory
     const inventory = await Inventory.findOne({ userId: req.user.id });
     if (!inventory || !inventory.sheetUrl) {
       return res.status(404).json({ error: "No inventory linked for this user." });
     }
 
-    //  Extract Sheet ID and setup Sheets API
     const sheetIdMatch = inventory.sheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
     if (!sheetIdMatch) throw new Error("Invalid Google Sheet URL");
     const sheetId = sheetIdMatch[1];
@@ -292,7 +307,6 @@ const auth = new google.auth.GoogleAuth({
  
     const sheets = google.sheets({ version: "v4", auth: await auth.getClient() as JWT });
 
-    // Helper to fetch sheet data
     const fetchSheet = async (sheetName: string) => {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
@@ -304,7 +318,6 @@ const auth = new google.auth.GoogleAuth({
       return rows.slice(1).map((r) => Object.fromEntries(headers.map((h, i) => [h, r[i] || ""])));
     };
 
-    // Fetch sheets
     const [products, sales, clients, socialMetrics, leads, leadProducts, procurements] =
       await Promise.all([
         fetchSheet("products"),
@@ -320,8 +333,10 @@ const auth = new google.auth.GoogleAuth({
       return res.status(400).json({ error: "Products or Sales sheet is missing or empty." });
     }
 
-    // -------------------- INSIGHTS --------------------
+ /////-----insights------////
+
     const totalProducts = products.length;
+
     const outOfStockProducts = products.filter(
       (p) => Number(p.stock_quantity) === 0
     );
@@ -330,19 +345,33 @@ const auth = new google.auth.GoogleAuth({
     );
     const outOfStock = outOfStockProducts.length;
     const lowStock = lowStockProducts.length;
-    const oneMonthAgo = dayjs().subtract(1, "month");
-    const recentSales = sales.filter((s) => dayjs(s.sale_date).isAfter(oneMonthAgo));
+
+
+const saleDates = sales
+  .map((s) => dayjs(s.sale_date))
+  .filter((d) => d.isValid());
+
+const latestSaleDateOrNull = dayjs.max(saleDates); 
+const latestSaleDate: Dayjs = latestSaleDateOrNull ?? dayjs();
+
+const fourWeeksAgo: Dayjs = latestSaleDate.subtract(4, "week");
+
+const oneMonthAgo = latestSaleDate
+  ? latestSaleDate.subtract(1, "month")
+  : dayjs().subtract(1, "month");
+
+const recentSales = sales.filter(
+  (s) =>
+    dayjs(s.sale_date).isValid() &&
+    (latestSaleDate ? dayjs(s.sale_date).isAfter(oneMonthAgo) : true)
+);
+
 
     const salesByProduct: Record<string, number> = {};
     recentSales.forEach((s) => (salesByProduct[s.product_id] = (salesByProduct[s.product_id] || 0) + Number(s.total_price || 0)));
 
-    const topStockProducts = Object.entries(salesByProduct)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([pid]) => ({
-        product_name: products.find((p) => p.product_id === pid)?.product_name || "Unknown",
-        stock_quantity: products.find((p) => p.product_id === pid)?.stock_quantity || "0",
-      }));
+  const topStockProducts = buildTopStockProducts(products, sales);
+
 
     const monthlyEarnings = recentSales.reduce((sum, s) => sum + Number(s.total_price || 0), 0);
 
@@ -364,7 +393,6 @@ const auth = new google.auth.GoogleAuth({
       percentage: ((count / totalClients) * 100).toFixed(2),
     }));
 
-    // Step 1: Aggregate engagement per platform
 const platformScores: Record<string, number> = {};
 
 socialMetrics.forEach((m) => {
@@ -372,13 +400,11 @@ socialMetrics.forEach((m) => {
   platformScores[m.platform] = (platformScores[m.platform] || 0) + score;
 });
 
-// Step 2: Convert to array
 const engagementScores = Object.entries(platformScores).map(([platform, total_score]) => ({
   platform,
   total_score,
 }));
 
-// Step 3: Scale scores and pick top platforms
 const maxEngagement = Math.max(...engagementScores.map((e) => e.total_score), 1);
 
 const socialEngagement = engagementScores
@@ -387,27 +413,16 @@ const socialEngagement = engagementScores
     total_score: e.total_score,
     scaled_score: ((e.total_score / maxEngagement) * 100).toFixed(2),
   }))
-  .filter((e) => ['Facebook', 'Twitter', 'Instagram'].includes(e.platform)) // keep only required platforms
+  .filter((e) => ['Facebook', 'Twitter', 'Instagram'].includes(e.platform)) 
   .sort((a, b) => Number(b.scaled_score) - Number(a.scaled_score));
 
 
-      const saleDates = sales
-  .map((s) => dayjs(s.sale_date))
-  .filter((d) => d.isValid());
 
-//  Handle empty or invalid sales dates
 if (saleDates.length === 0) {
   console.warn("No valid sales dates found.");
-  return []; // or handle gracefully (e.g., return empty weeklySales)
+  return []; 
 }
 
-//  Get the latest sale date safely
-const latestSaleDate = dayjs.max(saleDates) as dayjs.Dayjs;
-
-// Compute range for last 4 weeks (based on sheet dates, not current date)
-const fourWeeksAgo = latestSaleDate.subtract(4, "week");
-
-//  Aggregate weekly sales
 const weeklySalesMap: Record<string, { total_units_sold: number; total_sales_amount: number }> = {};
 
 sales
@@ -421,7 +436,7 @@ sales
     weeklySalesMap[weekKey].total_sales_amount += Number(s.total_price || 0);
   });
 
-// Convert map to array and sort chronologically
+
 const weeklySales = Object.entries(weeklySalesMap)
   .map(([week, vals]) => ({ week, ...vals }))
   .sort((a, b) => {
@@ -518,11 +533,92 @@ const weeklySales = Object.entries(weeklySalesMap)
     res.status(500).json({ error: "Failed to extract inventory insights." });
   }
 };
+export const getStockQuickUpdate = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const inventory = await Inventory.findOne({ userId: req.user.id });
+    if (!inventory || !inventory.sheetUrl) {
+      return res.status(404).json({ error: "No inventory linked" });
+    }
+
+    // extract sheet id
+    const sheetIdMatch = inventory.sheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    if (!sheetIdMatch) throw new Error("Invalid sheet URL");
+    const sheetId = sheetIdMatch[1];
+
+    const keyFilePath = process.env.RENDER_SECRETS_PATH
+      ? path.join(process.env.RENDER_SECRETS_PATH, "creds.json")
+      : path.join(__dirname, "../config/creds.json");
+
+    const auth = new google.auth.GoogleAuth({
+      keyFile: keyFilePath,
+      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    });
+
+    const sheets = google.sheets({
+      version: "v4",
+      auth: await auth.getClient() as JWT,
+    });
+
+    // fetch only products + sales
+    const fetchSheet = async (name: string) => {
+      const res = await sheets.spreadsheets.values.get({
+        spreadsheetId: sheetId,
+        range: `${name}!A1:Z1000`,
+      });
+
+      const rows = res.data.values || [];
+      if (rows.length < 2) return [];
+      const headers = rows[0];
+
+      return rows.slice(1).map(r =>
+        Object.fromEntries(headers.map((h, i) => [h, r[i] || ""]))
+      );
+    };
+
+    const [products, sales] = await Promise.all([
+      fetchSheet("products"),
+      fetchSheet("sales"),
+    ]);
+
+    // -------- STOCK SUMMARY --------
+    const totalProducts = products.length;
+
+    const outOfStock = products.filter(p => Number(p.stock_quantity) === 0).length;
+    const lowStock = products.filter(
+      p => Number(p.stock_quantity) > 0 && Number(p.stock_quantity) <= 10
+    ).length;
+  
+
+    // -------- TOP STOCK PRODUCTS --------
+    const salesByProduct: Record<string, number> = {};
+
+    sales.forEach(s => {
+      salesByProduct[s.product_id] =
+        (salesByProduct[s.product_id] || 0) + Number(s.total_price || 0);
+    });
+
+ const topStockProducts = buildTopStockProducts(products, sales);
+
+
+  return {
+  stockSummary: { totalProducts, outOfStock, lowStock },
+  topStockQuantityProducts: topStockProducts,
+};
+
+  } catch (err) {
+    console.error("Quick stock fetch failed:", err);
+    return{ error: "Failed to fetch quick stock update" };
+  }
+};
+
 export const updateProductStock = async (req: AuthRequest, res: Response) => {
   try {
     const { productName, newStockQuantity } = req.body;
 
-    //  Validate input
     if (!req.user?.id) {
       return res.status(401).json({ error: "Unauthorized access. Please log in." });
     }
@@ -530,18 +626,15 @@ export const updateProductStock = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: "Product name and new stock quantity are required." });
     }
 
-    //  Get user's inventory
     const inventory = await Inventory.findOne({ userId: req.user.id });
     if (!inventory || !inventory.sheetUrl) {
       return res.status(404).json({ error: "No inventory linked for this user." });
     }
 
-    //  Extract Sheet ID
     const sheetIdMatch = inventory.sheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
     if (!sheetIdMatch) throw new Error("Invalid Google Sheet URL");
     const sheetId = sheetIdMatch[1];
 
-    //  Setup Google Sheets API
     const keyFilePath = process.env.RENDER_SECRETS_PATH
   ? path.join(process.env.RENDER_SECRETS_PATH, "creds.json")
   : path.join(__dirname, "../config/creds.json"); // fallback for local dev
@@ -553,7 +646,6 @@ const auth = new google.auth.GoogleAuth({
 
     const sheets = google.sheets({ version: "v4", auth: (await auth.getClient()) as JWT });
 
-    //  Fetch the "products" tab data
     const range = `products!A1:Z1000`;
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
@@ -571,13 +663,13 @@ const auth = new google.auth.GoogleAuth({
       return res.status(400).json({ error: "Products sheet must have 'product_name' and 'stock_quantity' columns." });
     }
 
-    //  Find the product row
+
     const productRowIndex = rows.findIndex((row, i) => i > 0 && row[productIndex]?.toLowerCase() === productName.toLowerCase());
     if (productRowIndex === -1) {
       return res.status(404).json({ error: `Product '${productName}' not found in sheet.` });
     }
 
-    // Update the stock quantity
+
     const targetCell = `products!${String.fromCharCode(65 + stockIndex)}${productRowIndex + 1}`;
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId,
@@ -587,16 +679,40 @@ const auth = new google.auth.GoogleAuth({
         values: [[newStockQuantity]],
       },
     });
+      console.log("stock updated in sheet")
+    insightsCache.delete(`insights_${req.user.id}`);
 
-    // Create notification after successful stock update
-    await Notification.create({
-      userId: req.user.id,
-      type: "stock",
-      productName,
-      stock: newStockQuantity,
-      message: `Stock updated for ${productName}. New stock: ${newStockQuantity}`,
-      severity: "low",
-    });
+    if (newStockQuantity <= 10) {
+
+  await createStockNotification({
+    userId: req.user.id,
+    productName,
+    stock: newStockQuantity,
+  });
+} else {
+
+  await Notification.create({
+    userId: req.user.id,
+    type: "stock",
+    productName,
+    stock: newStockQuantity,
+    message: `Stock updated for ${productName}. New stock: ${newStockQuantity}`,
+    severity: "low",
+  });
+}
+
+  
+    
+    try{
+ const quickInsights: any = await getStockQuickUpdate(req, res);
+ io.to(req.user.id).emit("stock-update", {
+   stockSummary: quickInsights.stockSummary,
+    topStockQuantityProducts: quickInsights.topStockQuantityProducts,
+});
+    }
+   catch(err){
+     console.error("Failed to emit real-time stock update:", err);
+   }
 
     return res.json({ message: `Stock for '${productName}' updated to ${newStockQuantity}. Notification created.` });
 
@@ -605,3 +721,4 @@ const auth = new google.auth.GoogleAuth({
     return res.status(500).json({ error: "Failed to update stock quantity." });
   }
 };
+

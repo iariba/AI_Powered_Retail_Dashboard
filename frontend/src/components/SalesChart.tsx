@@ -15,23 +15,21 @@ import {
 } from './ui/card';
 
 
-// Type definition for a single weekly sales record
-interface WeeklySalesData {
-  year: number;
-  week_number: number;
-  total_sales_amount: string;
+export interface WeeklySalesData {
+  week: string;
+  total_units_sold: number;
+  total_sales_amount: number;
 }
 
-// Props for the SalesChart component
 interface SalesChartProps {
-  weeklySalesLast4Weeks?: WeeklySalesData[]; // optional for safety
+  weeklySalesLast4Weeks?: WeeklySalesData[]; 
 }
 
 export function SalesChart({ weeklySalesLast4Weeks = [] }: SalesChartProps) {
   // Safely transform backend data
   const transformedData = weeklySalesLast4Weeks.map((entry, index) => ({
     week: `Week ${index + 1}`,
-    sales: parseFloat(entry?.total_sales_amount ?? '0'),
+    sales: entry?.total_sales_amount ?? 0,
   }));
 
   const hasData = transformedData.length > 0;
@@ -43,7 +41,7 @@ export function SalesChart({ weeklySalesLast4Weeks = [] }: SalesChartProps) {
         <p className='min-[321px]:hidden '>Use bigger screens to see sales chart</p>
       </CardHeader>
       <CardContent>
-        <div className="h-[250px] sm:h-[300px] md:h-[300px] hidden min-[321px]:block">
+        <div className="h-[250px] sm:h-[300px] md:h-[300px] hidden min-[321px]:block 2xl:h-[400px]">
           {hasData ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={transformedData}>
@@ -65,22 +63,18 @@ export function SalesChart({ weeklySalesLast4Weeks = [] }: SalesChartProps) {
         y={y}
         dx={-10}
         dy={5}
-        fontSize={isMobile ? 10 : 12}
+        fontSize={isMobile ? 10 : window.innerWidth >= 1536 ? 14 : 12}
         transform={isMobile ? `rotate(-45, ${x}, ${y})` : undefined}
         textAnchor="end"
-        fill="#888"
+        fill={window.innerWidth >= 1536 ? "#555" : "#888"}
       >
         {Math.round(payload.value)}
       </text>
     );
   }}
 />
-
-
-
-
                 <Tooltip />
-                <Line type="monotone" dataKey="sales" stroke="#38bdf8" strokeWidth={2} />
+                <Line type="monotone" dataKey="sales" stroke="#38bdf8" strokeWidth={window.innerWidth >= 1536 ? 3 : 2} />
               </LineChart>
             </ResponsiveContainer>
           ) : (

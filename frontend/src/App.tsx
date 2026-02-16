@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "./components/ui/toaster";
 import NotFound from "./pages/NotFound";
 import WelcomePage from "./pages/WelcomePage";
@@ -10,22 +9,22 @@ import DatabaseForm from "./pages/Database";
 import ForecastsPage from "./pages/ForecastPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import { ReportProvider } from "./ReportContext";
+import { useEffect } from "react";
+import { connectSocket } from "./socket";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-    },
-  },
-});
+
 
 function App() {
 
-
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    console.log("Connecting socket with token:", token);
+    connectSocket(token);
+  }
+}, []);
   return (
     <ThemeProvider defaultTheme="light">
-      <QueryClientProvider client={queryClient}>
         <div className="min-h-screen bg-background">
           <Router>
        
@@ -49,7 +48,6 @@ function App() {
           </Router>
           <Toaster />
         </div>
-      </QueryClientProvider>
     </ThemeProvider>
   );
 }

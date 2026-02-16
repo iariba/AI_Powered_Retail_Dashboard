@@ -42,27 +42,30 @@ export function InventoryOverview({ data }: InventoryOverviewProps) {
   };
   return (
     <Card className="w-full h-full">
-      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between ">
+      <CardHeader className=" md:h-[120px] flex flex-wrap items-center justify-between 2xl:h-[80px] sm:flex-row sm:items-center sm:justify-between gap-2">
         <CardTitle>Inventory Overview</CardTitle>
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
+        <Button className='bg-primary text-white w-full sm:w-auto shrink-0' onClick={() => setIsDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4 2xl:mr-3" />
           Update Inventory
         </Button>
       </CardHeader>
 
-      <CardContent className="px-2 pb-3">
-  <div className="grid gap-2 sm:gap-4 grid-cols-1 sm:grid-cols-3">
-    <div className="flex flex-col justify-between h-full p-2">
-      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Stock Items</p>
-      <p className="text-xl sm:text-2xl font-bold text-primary mt-1">{totalProducts}</p>
+      <CardContent className="">
+  <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+    <div className="flex flex-col justify-between h-auto sm:h-[80px]">
+
+      <p className="text-sm font-medium text-muted-foreground 2xl:font-bold 2xl:text-lg">Total Stock Items</p>
+      <p className="text-xl sm:text-2xl font-bold text-primary mt-1 2xl:font-bold 2xl:text-3xl">{totalProducts}</p>
     </div>
-    <div className="flex flex-col justify-between h-full p-2">
-      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Low Stock Items</p>
-      <p className="text-xl sm:text-2xl font-bold text-yellow-500 mt-1">{lowStock}</p>
+   <div className="flex flex-col justify-between h-auto sm:h-[80px]">
+
+      <p className="text-sm font-medium text-muted-foreground 2xl:font-bold 2xl:text-lg">Low Stock Items</p>
+      <p className="text-xl sm:text-2xl font-bold text-yellow-500 mt-1 2xl:font-bold 2xl:text-3xl">{lowStock}</p>
     </div>
-    <div className="flex flex-col justify-between h-full p-2">
-      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Out of Stock</p>
-      <p className="text-xl sm:text-2xl font-bold text-red-500 mt-1">{outOfStock}</p>
+  <div className="flex flex-col justify-between h-auto sm:h-[80px]">
+
+      <p className="text-sm font-medium text-muted-foreground 2xl:font-bold 2xl:text-lg">Out of Stock</p>
+      <p className="text-xl sm:text-2xl font-bold text-red-500 mt-1 2xl:font-bold 2xl:text-3xl">{outOfStock}</p>
     </div>
   </div>
 </CardContent>

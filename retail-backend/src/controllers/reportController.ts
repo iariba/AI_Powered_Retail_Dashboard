@@ -14,7 +14,6 @@ export const getUserReports = async (req: AuthRequest, res: Response) => {
         return res.status(404).json({ error: "No reports found for this user." });
       }
   
-      // Convert Mongo Binary fields to base64
       const formatReport = (binaryField?: any) =>
         binaryField ? binaryField.toString("base64") : null;
   
@@ -36,7 +35,7 @@ export const getUserReports = async (req: AuthRequest, res: Response) => {
 export const deleteUserReport = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { reportType } = req.body; // Expected: "mba", "demand", "segmentation"
+    const { reportType } = req.body; 
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized access. Please log in." });
@@ -47,7 +46,6 @@ export const deleteUserReport = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: "Invalid report type." });
     }
 
-    // Dynamically build field to unset
     const fieldToUnset = `${reportType}_report`;
 
     const result = await Reports.findOneAndUpdate(

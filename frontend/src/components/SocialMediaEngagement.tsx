@@ -30,7 +30,7 @@ export function SocialMediaEngagement({
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // ✅ Correct mapping
+  // Correct mapping
   const platformEngagementData = socialEngagement.map((platform) => ({
     platform: platform.platform,
     engagement: platform.total_score || 0,
@@ -41,40 +41,63 @@ export function SocialMediaEngagement({
       <CardHeader>
         <CardTitle>Social Media Engagement</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent >
         {platformEngagementData.length === 0 ? (
           <p className="text-center text-muted-foreground">No engagement data available</p>
         ) : (
-          <div className="h-[300px] mb-5">
+          <div className="h-[300px] mb-5 2xl:h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={platformEngagementData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+             <BarChart
+  data={platformEngagementData}
+  layout={isSmallScreen ? "vertical" : "horizontal"}
+  margin={{ top: 20, right: 10, left: isSmallScreen ? 10 : 0, bottom: 5 }}
+>
+
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="platform" tick={isSmallScreen ? false : undefined} />
-                <YAxis />
-                <Tooltip />
+{isSmallScreen ? (
+  <>
+    <XAxis
+      type="number"
+      tickFormatter={(v) =>
+        v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v
+      }
+    />
+    <YAxis
+      type="category"
+      dataKey="platform"
+      width={90}
+    />
+  </>
+) : (
+  <>
+    <XAxis
+      dataKey="platform"
+      tick={{
+        fill: window.innerWidth >= 1536 ? "#555" : "#888",
+        fontSize: window.innerWidth >= 1536 ? 15 : 13,
+      }}
+    />
+    <YAxis
+      tickFormatter={(v) =>
+        v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v
+      }
+    />
+  </>
+)}
+
+
+                <Tooltip
+  formatter={(v: number) =>
+    v >= 1000 ? `${(v / 1000).toFixed(1)}K` : v
+  }
+/>
+
                 <Bar
                   dataKey="engagement"
                   fill="#1a5654"
-                  label={
-                    isSmallScreen
-                      ? ({ x, y, width, height, index }) => {
-                          const platform = platformEngagementData[index]?.platform;
-                          return (
-                            <text
-                              x={x + width / 2}
-                              y={y + height / 2}
-                              transform={`rotate(-90, ${x + width / 2}, ${y + height / 2})`}
-                              fill="white"
-                              fontSize={12}
-                              textAnchor="middle"
-                              alignmentBaseline="middle"
-                            >
-                              {platform}
-                            </text>
-                          );
-                        }
-                      : false
-                  }
+                  barSize={isSmallScreen ? 30 : window.innerWidth < 1280 ? 40 : 70}
+                  
+                  
                 />
               </BarChart>
             </ResponsiveContainer>

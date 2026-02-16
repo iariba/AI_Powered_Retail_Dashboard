@@ -19,13 +19,12 @@ export const generateForecastReport = async (req: AuthRequest, res: Response) =>
       return res.status(401).json({ error: "Unauthorized access. Please log in." });
     }
 
-    //  Ensure temp directory exists
     const tempDir = path.join(__dirname, "../temp");
     if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
 
     let csvPath: string | null = null;
 
-    //  1. Check for existing dataset (last 6 days)
+    //  Check for existing dataset (last 6 days)
     const existingFile = fs
       .readdirSync(tempDir)
       .find((file) => file.startsWith(`sales_${userId}`) && file.endsWith(".csv"));
@@ -43,7 +42,7 @@ export const generateForecastReport = async (req: AuthRequest, res: Response) =>
       }
     }
 
-    //  2. If no valid file, fetch from Google Sheets
+    //  If no valid file, fetch from Google Sheets
     if (!csvPath) {
       console.log(" Downloading fresh sales dataset...");
       const inventory = await Inventory.findOne({ userId });
@@ -81,7 +80,7 @@ const auth = new google.auth.GoogleAuth({
       fs.writeFileSync(csvPath, csvContent);
     }
 
-    // 3. Prepare request to ML API
+    //  Prepare request to ML API
     const formData = new FormData();
     formData.append("file", fs.createReadStream(csvPath));
 
@@ -111,7 +110,6 @@ const auth = new google.auth.GoogleAuth({
     console.log(" Forecast Type:", forecastType);
 
     
-    //  Decode PDF & Save to MongoDB (Replace if exists)
     const pdfBase64 = mlResponse.data.pdf;
     if (!pdfBase64) throw new Error("ML API did not return a PDF");
     console.log(" PDF Base64 (first 100 chars):", pdfBase64.slice(0, 100));
@@ -123,15 +121,14 @@ const auth = new google.auth.GoogleAuth({
       { $set: { [`${forecastType}_report`]: pdfBuffer } },
       { upsert: true, new: true }
     );
-    // Emit real-time event to frontend
-const io = req.app.get("io"); // Assuming io is attached to app in server.ts
+
+const io = req.app.get("io"); 
 io.to(userId.toString()).emit("reportGenerated", {
   type: forecastType,
   message: `${forecastType.toUpperCase()} report is ready`,
 });
 
 
-    //  Create notification
     await Notification.create({
       userId,
       type: "report",

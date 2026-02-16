@@ -1,5 +1,5 @@
-// src/services/inventoryService.ts
-import api from "./axios"; // ✅ use your axios middleware
+
+import api from "./axios"; 
 
 export const updateInventory = async (
   productName: string,

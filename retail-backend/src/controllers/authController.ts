@@ -26,7 +26,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-//  Login Controller (HttpOnly Cookie)
+//  Login Controller
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
 
@@ -57,8 +57,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   
       res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // None in prod, lax in local
+        secure: process.env.NODE_ENV === "production", 
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", 
         maxAge: 24 * 60 * 60 * 1000,
       });
       
@@ -72,7 +72,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-//  Protected Route (No Change)
 export const protectedRoute = (req: Request, res: Response): void => {
   res.json({
     message: "Welcome to the protected route!",
@@ -80,7 +79,6 @@ export const protectedRoute = (req: Request, res: Response): void => {
   });
 };
 
-//  Logout (Clear Cookie)
 export const logout = async (_req: Request, res: Response): Promise<void> => {
   try {
     res.clearCookie("token", {
@@ -94,10 +92,9 @@ export const logout = async (_req: Request, res: Response): Promise<void> => {
   }
 };
 
-//  Get Username (From Cookie)
 export const getUsername = async (req: Request, res: Response): Promise<void> => {
   try {
-    const token = req.cookies?.token; //  Read token from cookie
+    const token = req.cookies?.token; 
     if (!token) {
       res.status(401).json({ error: "No token provided" });
       return;

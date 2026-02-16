@@ -7,7 +7,7 @@ import { AuthRequest } from "../middleware/authMiddleware";
 import { io } from "../server"; 
 import { Inventory } from "../models/Inventory";
 import fs from "fs";
-//  Fetch sheet metadata (tab names)
+
 export const getGoogleSheetMeta = async (sheetUrl: string): Promise<string[]> => {
   const sheetIdMatch = sheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
   if (!sheetIdMatch) throw new Error("Invalid Google Sheet URL");
@@ -30,12 +30,9 @@ const auth = new google.auth.GoogleAuth({
 
   if (!meta.data.sheets || meta.data.sheets.length === 0) return [];
 
-  //  Extract sheet/tab names
   return meta.data.sheets.map((s) => s.properties?.title || "Untitled Sheet");
 };
 
-
-// Define types
 interface Product {
   product_id: string;
   product_name: string;
@@ -57,7 +54,7 @@ export const sendUpdates = async (userId: string): Promise<void> => {
   console.log(`sendUpdates called for user ${userId}`);
 
   try {
-    // Fetch inventory for the user
+
     const inventory = await Inventory.findOne({ userId });
     console.log(" Inventory found:", inventory?.sheetUrl || "None");
     if (!inventory || !inventory.sheetUrl) {
@@ -65,13 +62,13 @@ export const sendUpdates = async (userId: string): Promise<void> => {
       return;
     }
 
-    //  Extract Sheet ID
+
     const sheetIdMatch = inventory.sheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
     console.log(" Extracted Sheet ID:", sheetIdMatch?.[1] || "None");
     if (!sheetIdMatch) throw new Error("Invalid Google Sheet URL");
     const sheetId = sheetIdMatch[1];
 
-    //  Setup Google Sheets API
+
     console.log("Authenticating Google Sheets...");
 
     const keyFilePath = process.env.RENDER_SECRETS_PATH
@@ -85,9 +82,9 @@ const auth = new google.auth.GoogleAuth({
 
     const sheets = google.sheets({ version: "v4", auth: (await auth.getClient()) as JWT });
 
-    // Helper to fetch and parse a sheet
+
     const fetchSheet = async <T = any>(sheetName: string): Promise<T[]> => {
-      console.log(`📥 Fetching sheet: ${sheetName}`);
+      console.log(`Fetching sheet: ${sheetName}`);
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
         range: `${sheetName}!A1:Z1000`,
@@ -102,7 +99,6 @@ const auth = new google.auth.GoogleAuth({
       ) as T[];
     };
 
-    //  Fetch Products and Sales
     const [products, sales] = await Promise.all([
       fetchSheet<Product>("products"),
       fetchSheet<Sale>("sales"),
@@ -114,7 +110,7 @@ const auth = new google.auth.GoogleAuth({
       return;
     }
 
-    //  Compute Stock Summary
+
     const totalProducts = products.length;
     const outOfStockProducts = products.filter((p) => Number(p.stock_quantity) === 0);
     const lowStockProducts = products.filter((p) => Number(p.stock_quantity) > 0 && Number(p.stock_quantity) <= 10);
@@ -125,7 +121,7 @@ const auth = new google.auth.GoogleAuth({
       lowStock: lowStockProducts.length,
     };
 
-    //  Compute Top Stock Products (based on recent sales)
+
     const oneMonthAgo = dayjs().subtract(1, "month");
     const recentSales = sales.filter((s) => dayjs(s.sale_date).isAfter(oneMonthAgo));
 
@@ -142,7 +138,7 @@ const auth = new google.auth.GoogleAuth({
         stock_quantity: products.find((p) => p.product_id === pid)?.stock_quantity || "0",
       }));
 
-    //  Emit via WebSocket
+ 
     console.log("Emitting stock update...");
     io.emit(`stock-update`, { stockSummary, topStockQuantityProducts });
 

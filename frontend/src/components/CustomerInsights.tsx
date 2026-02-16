@@ -47,7 +47,7 @@ export function CustomerInsights({ socialEngagement = [], leadBreakdown = [] }: 
 
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsSmallScreen(window.innerWidth < 1025); // Tailwind's sm breakpoint
+      setIsSmallScreen(window.innerWidth < 1025); 
     };
 
     checkScreenSize();

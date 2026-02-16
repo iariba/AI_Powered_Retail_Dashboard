@@ -20,12 +20,12 @@ export default function InventoryCostDistribution({
 }) {
   return (
     <div>
-      <Card className="sm:col-span-2">
+      <Card className="sm:col-span-2 h-full">
         <CardHeader>
           <CardTitle>Inventory Costs Distribution</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
+        <CardContent className='flex flex-col '>
+          <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -36,8 +36,9 @@ export default function InventoryCostDistribution({
                   ]}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
+               innerRadius={window.innerWidth >= 1536 ? 80 : window.innerWidth >= 640 ? 70 : 50}
+outerRadius={window.innerWidth >= 1536 ? 120 : window.innerWidth >= 640 ? 100 : 70}
+
                   paddingAngle={5}
                   dataKey="value"
                 >
@@ -45,10 +46,17 @@ export default function InventoryCostDistribution({
                     <Cell key={`cell-${index}`} fill={color} />
                   ))}
                 </Pie>
-                <Tooltip />
+               <Tooltip
+  wrapperStyle={{
+    fontSize: window.innerWidth >= 1536 ? "15px" : "13px"
+  }}
+/>
+
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex justify-center gap-4 text-sm">
+            </div>
+           <div className=" gap-2 p-2 flex flex-wrap justify-center  sm:gap-4 text-sm 2xl:text-base mt-4">
+
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS[0] }} />
                 <span>Holding</span>
@@ -62,7 +70,7 @@ export default function InventoryCostDistribution({
                 <span>Shortage</span>
               </div>
             </div>
-          </div>
+          
         </CardContent>
       </Card>
     </div>

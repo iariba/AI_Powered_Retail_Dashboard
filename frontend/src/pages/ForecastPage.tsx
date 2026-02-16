@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Loader2, Download, Trash2, Network, Users, BarChart3 } from "lucide-react";
 import { runForecast } from "../api/forecast";
 import { getReports, deleteReport } from "../api/report"; 
-import socket from "../socket";
+import {connectSocket, getSocket} from "../socket";
 
 export default function ForecastsPage() {
   const [loadingType, setLoadingType] = useState<"mba" | "demand" | "customer" | null>(null);
@@ -15,7 +15,8 @@ export default function ForecastsPage() {
 
   // Fetch reports from backend when page loads
   useEffect(() => {
-
+    const token = localStorage.getItem("token");
+   const socket = getSocket() || connectSocket(token || ""); 
     const fetchReports = async () => {
       console.log("Fetching reports...");
       try {
@@ -38,10 +39,9 @@ export default function ForecastsPage() {
         });
         console.log("Reports state:", reports);
       } catch (err) {
-        console.error("❌ Failed to fetch reports:", err);
+        console.error("Failed to fetch reports:", err);
       }
     };
-/*******  9f0880e5-ff48-4002-8758-f661372516ca  *******/
   
     fetchReports(); //  Fetch on initial page load
   
@@ -49,7 +49,7 @@ export default function ForecastsPage() {
     socket.on("reportGenerated", fetchReports);
   
     return () => {
-      socket.off("reportGenerated", fetchReports); // Cleanup listener
+      socket.off("reportGenerated", fetchReports); 
     };
   }, []);
   
@@ -64,7 +64,6 @@ export default function ForecastsPage() {
 
       const result = await runForecast(forecastType as "mba" | "demand" | "segmentation");
 
-      // Decode PDF
       const pdfBlob = new Blob([Uint8Array.from(atob(result.pdf), (c) => c.charCodeAt(0))], {
         type: "application/pdf",
       });
@@ -75,7 +74,6 @@ export default function ForecastsPage() {
         [type]: pdfUrl,
       }));
 
-      // Auto-download
       const link = document.createElement("a");
       link.href = pdfUrl;
       link.download = `${forecastType}_report.pdf`;
@@ -88,7 +86,7 @@ export default function ForecastsPage() {
     }
   };
 
-  //  Download Report
+
   const handleDownload = (type: "mba" | "demand" | "customer") => {
     const url = reports[type];
     if (url) {
@@ -99,7 +97,6 @@ export default function ForecastsPage() {
     }
   };
 
-  //  Delete Report (calls backend)
   const handleDelete = async (type: "mba" | "demand" | "customer") => {
     try {
       const reportType = type === "customer" ? "segmentation" : type;

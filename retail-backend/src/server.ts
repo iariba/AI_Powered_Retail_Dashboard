@@ -14,19 +14,21 @@ import reportRoute from "./routes/reportRoute";
 import notificationRouter from "./routes/notificationRoute";
 import { sendUpdates } from "./utils/inventory";
 import { Inventory } from "./models/Inventory";
-
+import jwt from "jsonwebtoken";
+import { parse } from "cookie";
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5500;
-// Middleware
 
 
-// CORS: Allow ONLY frontend React at 5173
-const allowedOrigins = [
-  "http://localhost:5173",                  // Dev frontend
-  "https://retail-frontend-ten.vercel.app", // Prod frontend
-];
+// CORS: Allow ONLY specified frontends
+const allowedOrigins = process.env.FRONTEND_URLS
+  ? process.env.FRONTEND_URLS.split(",").map(o => o.trim())
+  : [];
+
+console.log("Allowed origins:", allowedOrigins);
+
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -45,7 +47,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-//  Handle OPTIONS (preflight) for allowed origin
+
 app.options("*", (req, res) => {
   const origin = req.headers.origin;
   if (origin && allowedOrigins.includes(origin)) {
@@ -87,7 +89,7 @@ app.use('/forecast', forecastRoute);
 app.use('/reports', reportRoute);
 app.use('/notify', notificationRouter);
 
-// Create HTTP Server
+
 const server = http.createServer(app);
 
 // Socket.IO restricted to React frontend
@@ -99,13 +101,48 @@ export const io = new Server(server, {
   },
 });
 
+io.use((socket, next) => {
+  try {
+    const cookieHeader = socket.request.headers.cookie;
 
-// Socket.IO Events
-io.on("connection", (socket) => {
-  console.log("Client connected:", socket.id);
-  socket.on("disconnect", () => console.log("Client disconnected:", socket.id));
-  socket.emit("connectt", { msg: "Hello from backend!" });
+    if (!cookieHeader) {
+      console.log("No cookie header in socket");
+      return next(new Error("Unauthorized"));
+    }
+
+    const cookies = parse(cookieHeader);
+    const token = cookies.token;
+
+    if (!token) {
+      console.log("Token missing in cookie");
+      return next(new Error("Unauthorized"));
+    }
+
+    const payload = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string
+    ) as { _id: string };
+
+    socket.data.userId = payload._id;
+
+    console.log("Socket authenticated:", payload._id);
+
+    next();
+  } catch (err) {
+    console.error("Socket auth error:", err);
+    next(new Error("Unauthorized"));
+  }
 });
+
+io.on("connection", (socket) => {
+  console.log(`User ${socket.data.userId} connected`);
+  socket.join(socket.data.userId);
+
+  socket.on("disconnect", () => {
+    console.log(`User ${socket.data.userId} disconnected`);
+  });
+});
+
 
 // Connect DB and start server
 connectDB().then(() => {

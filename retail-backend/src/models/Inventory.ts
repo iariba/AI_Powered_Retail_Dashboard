@@ -1,15 +1,15 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IInventory extends Document {
-  userId: mongoose.Types.ObjectId;  // Reference to User who connected this sheet
-  sheetUrl: string;                 // Google Sheet link
-  sheetId: string;                  // Extracted sheet ID for quick access
+  userId: mongoose.Types.ObjectId;  
+  sheetUrl: string;              
+  sheetId: string;                  
   watchChannel?: {
-    channelId: string;              // Webhook channel ID
-    sheetId: string;                // Sheet ID linked to webhook
-    expiration: string;             // Expiration timestamp from Google API
+    channelId: string;          
+    sheetId: string;               
+    expiration: string;             
   };
-  connectedAt: Date;                // When the sheet was connected
+  connectedAt: Date;                
 }
 
 const inventorySchema: Schema<IInventory> = new Schema(

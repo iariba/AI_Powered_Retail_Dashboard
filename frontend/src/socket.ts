@@ -1,21 +1,42 @@
 import { io, Socket } from "socket.io-client";
 
-let SOCKET_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5200";
-console.log("🌐 Connecting to:", SOCKET_URL);
+let socket: Socket | null = null;
 
-const isLocalDev = window.location.hostname === "localhost";
+const SOCKET_URL =
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:5200";
 
-const socket: Socket = io(SOCKET_URL, {
-  transports: ["websocket"], 
-  reconnection: true,
-  timeout: 20000,
-  rejectUnauthorized: false,
-  secure: !isLocalDev, 
-  withCredentials: true,
-});
+export const connectSocket = (token: string) => {
+  if (socket && socket.connected) return socket;
 
-socket.on("connect", () => console.log("✅ [Socket] Connected:", socket.id));
-socket.on("disconnect", () => console.warn("⚠️ [Socket] Disconnected."));
-socket.on("connect_error", (err) => console.error("❌ [Socket] Connect error:", err.message));
+  console.log("🌐 Connecting socket with token:", token);
 
-export default socket;
+  socket = io(SOCKET_URL, {
+    auth: { token },
+    transports: ["websocket"],
+    reconnection: true,
+    withCredentials: true,
+  });
+
+  socket.on("connect", () => {
+    console.log("Socket connected:", socket?.id);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected");
+  });
+
+  socket.on("connect_error", (err) => {
+    console.error("Socket error:", err.message);
+  });
+
+  return socket;
+};
+
+export const getSocket = () => socket;
+
+export const disconnectSocket = () => {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+};

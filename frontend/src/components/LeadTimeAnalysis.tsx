@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 interface LeadTimeData {
   product_name: string;
-  avg_conversion_time_days: string;
+  avg_conversion_time_days: number;
 }
 
 interface LeadTimeProps {
@@ -16,12 +16,12 @@ export default function LeadTime({ data = [] }: LeadTimeProps) {
         <CardTitle>Lead Time Analysis</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-4 2xl:space-y-6">
           {data.map((product) => {
-            const avgDays = parseFloat(product.avg_conversion_time_days || '0');
+            const avgDays = product.avg_conversion_time_days || 0;
             return (
               <div key={product.product_name} className="space-y-1">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm 2xl:text-base">
                   <span>{product.product_name}</span>
                   <span>{avgDays.toFixed(2)} Days</span>
                 </div>

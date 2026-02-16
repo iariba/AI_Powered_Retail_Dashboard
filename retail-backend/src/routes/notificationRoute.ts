@@ -4,7 +4,7 @@ import { authenticateToken } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
-// Extend Request type to include `user` from the middleware
+
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
@@ -12,7 +12,6 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-// GET: Fetch 10 most recent unread notifications for the authenticated user
 router.get("/", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     if (!req.user?.id) {

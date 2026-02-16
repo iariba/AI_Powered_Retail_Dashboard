@@ -44,16 +44,16 @@ export function LeadBreakdown({ leadBreakdown}: LeadBreakdownProps) {
       <CardHeader>
         <CardTitle>Lead Conversion Funnel</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="w-full h-[305px] xs:h-[240px] xs:justify-between">
+      <CardContent className='flex flex-col'>
+        <div className="w-full h-[250px] ">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart className='mt-0'>
               <Pie
                 data={conversionData}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={80}
+                            innerRadius={window.innerWidth >= 1536 ? 80 : window.innerWidth >= 640 ? 70 : 50}
+outerRadius={window.innerWidth >= 1536 ? 120 : window.innerWidth >= 640 ? 100 : 70}
                 paddingAngle={5}
                 dataKey="value"
               >
@@ -61,11 +61,15 @@ export function LeadBreakdown({ leadBreakdown}: LeadBreakdownProps) {
                   <Cell key={`cell-${index}`} fill={color} />
                 ))}
               </Pie>
-              <Tooltip />
+                          <Tooltip
+  wrapperStyle={{
+    fontSize: window.innerWidth >= 1536 ? "15px" : "13px"
+  }}
+/>
             </PieChart>
           </ResponsiveContainer>
-
-          <div className="flex justify-center gap-4 text-sm mb-">
+</div>
+          <div className="flex justify-center gap-2 p-2 text-sm 2xl:text-base">
             {conversionData.map((entry, index) => (
               <div key={entry.name} className="flex items-center gap-2 xs:mb-9">
                 <div
@@ -76,7 +80,6 @@ export function LeadBreakdown({ leadBreakdown}: LeadBreakdownProps) {
               </div>
             ))}
           </div>
-        </div>
       </CardContent>
     </Card>
   );
