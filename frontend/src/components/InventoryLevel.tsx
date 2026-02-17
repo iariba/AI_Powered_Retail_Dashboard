@@ -90,13 +90,16 @@ useEffect(() => {
   </>
 ) : ismedium ? (
   <>
-    <XAxis
-      dataKey="productName"
-      tick={false}
-      axisLine={false}
-      tickLine={false}
-      height={10}
-    />
+<XAxis
+  dataKey="productName"
+  tick={false}         
+  tickLine={false}      
+ height={25}
+  axisLine={{ stroke: "#9ca3af", strokeWidth: 1 }} 
+
+
+/>
+
     <YAxis
       domain={[0, Math.max(...formattedData.map(d => d.stockQuantity)) + 10]}
       width={25}

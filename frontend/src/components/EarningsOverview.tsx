@@ -21,8 +21,8 @@ export function EarningsOverview({
         <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
           <div>
             <div className="flex flex-col justify-between h-auto sm:h-[80px]">
-              <p className="text-sm font-medium text-muted-foreground 2xl:font-bold 2xl:text-lg">Total Earnings</p>
-              <p className="text-2xl font-bold 2xl:font-bold 2xl:text-3xl">
+              <p className="text-lg font-medium text-muted-foreground md:font-bold 2xl:text-lg">Total Earnings</p>
+              <p className="text-2xl font-bold lg:text-xl 2xl:text-2xl">
                 ${totalEarnings?.toLocaleString('en-US', { minimumFractionDigits: 2 }) ?? 'N/A'}
               </p>
             </div>
@@ -31,10 +31,10 @@ export function EarningsOverview({
           {top1 && (
             <div>
               <div className="flex flex-col justify-between h-auto sm:h-[80px]">
-                <p className="text-sm font-medium text-muted-foreground line-clamp-2 2xl:font-bold 2xl:text-lg">
+                <p className="text-lg font-medium text-muted-foreground line-clamp-2 md:font-bold 2xl:text-lg">
                   {top1.product_name}
                 </p>
-                <p className="text-xl font-bold 2xl:font-bold 2xl:text-2xl">
+                <p className="text-xl font-bold">
                   ${Number(top1.revenue_generated).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </p>
               </div>
@@ -44,10 +44,10 @@ export function EarningsOverview({
           {top2 && (
             <div>
               <div className="flex flex-col justify-between  h-auto sm:h-[80px] ">
-                <p className="text-sm font-medium text-muted-foreground line-clamp-2 2xl:font-bold 2xl:text-lg">
+                <p className="text-lg font-medium text-muted-foreground line-clamp-2 md:font-bold 2xl:text-lg">
                   {top2.product_name}
                 </p>
-                <p className="text-xl font-bold 2xl:font-bold 2xl:text-2xl ">
+                <p className="text-xl font-bold">
                   ${Number(top2.revenue_generated).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </p>
               </div>

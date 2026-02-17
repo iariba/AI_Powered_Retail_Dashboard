@@ -54,17 +54,17 @@ export function InventoryOverview({ data }: InventoryOverviewProps) {
   <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
     <div className="flex flex-col justify-between h-auto sm:h-[80px]">
 
-      <p className="text-sm font-medium text-muted-foreground 2xl:font-bold 2xl:text-lg">Total Stock Items</p>
+      <p className="text-lg font-medium text-muted-foreground md:font-bold 2xl:text-lg">Total Stock Items</p>
       <p className="text-xl sm:text-2xl font-bold text-primary mt-1 2xl:font-bold 2xl:text-3xl">{totalProducts}</p>
     </div>
    <div className="flex flex-col justify-between h-auto sm:h-[80px]">
 
-      <p className="text-sm font-medium text-muted-foreground 2xl:font-bold 2xl:text-lg">Low Stock Items</p>
+      <p className="text-lg font-medium text-muted-foreground md:font-bold 2xl:text-lg">Low Stock Items</p>
       <p className="text-xl sm:text-2xl font-bold text-yellow-500 mt-1 2xl:font-bold 2xl:text-3xl">{lowStock}</p>
     </div>
   <div className="flex flex-col justify-between h-auto sm:h-[80px]">
 
-      <p className="text-sm font-medium text-muted-foreground 2xl:font-bold 2xl:text-lg">Out of Stock</p>
+      <p className="text-lg font-medium text-muted-foreground md:font-bold 2xl:text-lg">Out of Stock</p>
       <p className="text-xl sm:text-2xl font-bold text-red-500 mt-1 2xl:font-bold 2xl:text-3xl">{outOfStock}</p>
     </div>
   </div>
